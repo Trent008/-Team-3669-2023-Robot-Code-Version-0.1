@@ -1,7 +1,7 @@
 // Field Oriented Control and Motion Smoothing
 #pragma once
 #include "AHRS.h"
-#include "Utilities/Vector.h"
+#include "Vector.h"
 #include <frc/smartdashboard/SmartDashboard.h>
 /**
  * Field Oriented Control:
@@ -29,11 +29,11 @@ private:
 public:
     FOC(double velocityAcceleration, double rotationalAccelleration, double drivingSpeed, double steeringSpeed)
     {
-        setpointFieldVelocity = new Vector(0, 0, 0);
-        fieldVelocity = new Vector(0, 0, 0);
-        fieldVelocityError = new Vector(0, 0, 0);
-        robotVelocity = new Vector(0, 0, 0);
-        fieldPosition = new Vector(0, 0, 0);
+        setpointFieldVelocity = new Vector();
+        fieldVelocity = new Vector();
+        fieldVelocityError = new Vector();
+        robotVelocity = new Vector();
+        fieldPosition = new Vector();
         rotationRate = 0;
         this->velocityAccelleration = velocityAcceleration;
         this->rotationalAccelleration = rotationalAccelleration;
@@ -77,12 +77,6 @@ public:
     double getRobotAngle()
     {
         return navXAngle;
-    }
-
-    Vector *getFieldPosition() {
-        fieldPosition->set(navx.GetDisplacementX(), navx.GetDisplacementY(), false);
-        //fieldPosition->scale(39.3701);
-        return fieldPosition;
     }
 
     /**

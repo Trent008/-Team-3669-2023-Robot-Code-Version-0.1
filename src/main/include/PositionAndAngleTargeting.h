@@ -1,5 +1,5 @@
 #pragma once
-#include "Utilities/Vector.h"
+#include "Vector.h"
 #include "AngleChooser.h"
 #include "frc/smartdashboard/SmartDashboard.h"
 
@@ -26,8 +26,8 @@ class PositionAndAngleTargeting
             this->angleProportional = angleProportional;
             this->maxDriveRate = maxDriveRate;
             this->maxRotationRate = maxRotationRate;
-            positionError = new Vector(0, 0, true);
-            distanceFromPositionTarget = new Vector(0, 0, true);
+            positionError = new Vector();
+            distanceFromPositionTarget = new Vector();
         }
 
         /**

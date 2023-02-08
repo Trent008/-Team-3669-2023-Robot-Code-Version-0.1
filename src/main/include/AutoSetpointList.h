@@ -1,5 +1,5 @@
 #pragma once
-#include "Utilities/Vector.h"
+#include "Vector.h"
 #include "AngleChooser.h"
 
 
@@ -8,13 +8,10 @@ class AutoSetpointList
 {
 private:
     double mP = 30;
-    double mA = 20;
+    double mA = 30;
     double p;
     double positionChangeTime;
     double angleChangeTime;
-    double changeTime;
-    double angleRate;
-    double positionRate;
     double difference;
     double angleDifference;
     Vector *lastPosition;
@@ -24,52 +21,59 @@ private:
     double angles[750];
     Vector *positions[750];
     AngleChooser angleChooser{};
+    double changeTime;
+    double positionRate;
+    double angleRate;
 
 public:
-    
     AutoSetpointList(double setpoints[10][4]) {
-        lastPosition = new Vector(0, 0, false);
-        nextPosition = new Vector(0, 0, false);
-        position = new Vector(0, 0, false);
-        positionDifference = new Vector(0, 0, false);
+        lastPosition = new Vector();
+        nextPosition = new Vector();
+        position = new Vector();
+        positionDifference = new Vector();
         int t = 0;
-        for (int i = 0; i < 750; i++) {
-          positions[i] = new Vector(0, 0, 1);
+        for (int n = 0; n < 750; n++) {
+          positions[n] = new Vector();
         }
         for (int i = 1; i < 10; i++) {  // loops through the setpoint list
-            lastPosition->set(setpoints[i-1][0],setpoints[i-1][1], false); 
-            nextPosition->set(setpoints[i][0],setpoints[i][1], false);
+            lastPosition->set(setpoints[i-1][0], setpoints[i-1][1]); 
+            nextPosition->set(setpoints[i][0], setpoints[i][1]);
             positionDifference->set(nextPosition);
             positionDifference->subtractVector(lastPosition);
             difference = positionDifference->getMagnitude();
             angleDifference = angleChooser.getShortestDirection(setpoints[i-1][2], setpoints[i][2]);
-            positionChangeTime = difference / mP;
-            angleChangeTime = std::abs(angleDifference) / mA;
+            // find the time it takes to reach the next setpoints
+            positionChangeTime = difference/mP;
+            angleChangeTime = std::abs(angleDifference)/mA;
+            // find the slowest change time
             if (positionChangeTime >= angleChangeTime) {
-                angleRate *= angleChangeTime/positionChangeTime;
-                positionRate = 1;
+                angleRate = angleChangeTime/positionChangeTime;
+                positionRate = 1.0;
                 changeTime = positionChangeTime;
             } else {
-                positionRate *= positionChangeTime/angleChangeTime;
-                angleRate = 1;
+                positionRate = positionChangeTime/angleChangeTime;
+                angleRate = 1.0;
                 changeTime = angleChangeTime;
             }
-          
-            for (int j = 0; j < (setpoints[i-1][3] * 50.0); j++) {
+
+            // break for the given time
+            for (double j = 0; j < setpoints[i-1][3]; j += 0.02) {
                 if (t < 750) {
                     positions[t]->set(lastPosition);
                     angles[t] = setpoints[i-1][2];
                     t++;
                 }
             }
-            for (int k = 0; k < changeTime * 50; k++) {  // 
+          
+            // set setpoints
+            for (double k = 0; k < changeTime; k += 0.02) {  // 
                 if (t<750) {
-                    position->set(positionDifference->getAngle(), 1, true);
-                    position->scale(getPathValue(k/50.0*positionRate, difference, mP));
+                    position->setPolar(1, positionDifference->getAngle());
+                    position->scale(getPathValue(k*positionRate, difference, mP));
                     position->addVector(lastPosition);
                     positions[t]->set(position);
                   
-                    angles[t] = setpoints[i-1][2] + getPathValue(k/50.0*angleRate, angleDifference, mA);
+                    angles[t] = setpoints[i-1][2] + getPathValue(k*angleRate, angleDifference, mA);
                     t++;
                 }
             }
@@ -78,7 +82,7 @@ public:
 
     double getPathValue(double t, double d, double m) {
         if (d != 0) {
-            p = m * t * std::abs(d) / d;
+            p = m * t * std::abs(d)/d;
         } else {
             p = 0;
         }

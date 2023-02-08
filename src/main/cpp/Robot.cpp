@@ -48,7 +48,7 @@ void Robot::AutonomousInit() {
     // Custom Auto goes here
   } else {
     // Default Auto goes here
-    motionController.update(new Vector(0, 0, false), 0);
+    motionController.update(new Vector(), 0);
   }
   driveMotor1.SetSelectedSensorPosition(0);
   driveMotor2.SetSelectedSensorPosition(0);

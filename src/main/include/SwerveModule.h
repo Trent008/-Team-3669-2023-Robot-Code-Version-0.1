@@ -1,6 +1,6 @@
 #pragma once
 #include "ctre/phoenix.h"
-#include "Utilities/Vector.h"
+#include "Vector.h"
 #include "AngleChooser.h"
 #include "rev/CANSparkMax.h"
 #include <frc/smartdashboard/SmartDashboard.h>
@@ -35,9 +35,9 @@ public:
         this->steeringMotor = steeringMotor;
         this->wheelEncoder = wheelEncoder;
         this->steeringMotorP = steeringMotorP;
-        turnVector = new Vector(posX, posY, 0);
+        turnVector = new Vector(posX, posY);
         turnVector->rotate(90);
-        wheelPositionChange = new Vector(0, 0, 1);
+        wheelPositionChange = new Vector();
     }
 
     // returns the angle the wheel needs to turn to
@@ -56,7 +56,7 @@ public:
         driveMotor->Set(wheelSpeed);
         steeringMotor->Set(angleError * (-steeringMotorP) / 180);
         currentPosition = driveMotor->GetSelectedSensorPosition(0);
-        wheelPositionChange->set(wheelEncoder->GetAbsolutePosition(), currentPosition - lastPosition, true);
+        wheelPositionChange->setPolar(currentPosition - lastPosition, wheelEncoder->GetAbsolutePosition());
         lastPosition = currentPosition;
     }
 

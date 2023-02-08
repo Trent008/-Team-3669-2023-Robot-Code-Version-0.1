@@ -30,14 +30,14 @@ public:
     this->motionController = motionController;
     for (int i = 0; i < 4; i++) {
       this->module[i] = module[i];
-      moduleVelocity[i] = new Vector(0, 0, 0);
+      moduleVelocity[i] = new Vector();
     }
-    moduleTurnVector = new Vector(0, 0, 0);
-    largestVector = new Vector(0, 0, 0);
-    averagePositionChange = new Vector(0, 0, 0);
-    fieldwheelPositionChange = new Vector(0, 0, 0);
-    fieldLocationEncoders = new Vector(0, 0, 0);
-    fieldLocation = new Vector(0, 0, 0);
+    moduleTurnVector = new Vector();
+    largestVector = new Vector();
+    averagePositionChange = new Vector();
+    fieldwheelPositionChange = new Vector();
+    fieldLocationEncoders = new Vector();
+    fieldLocation = new Vector();
   }
 
   /**
@@ -56,14 +56,14 @@ public:
       }
     }
     
-    averagePositionChange->set(0, 0, 0);    // reset the average to zero before averaging again
+    averagePositionChange->set(0, 0);    // reset the average to zero before averaging again
 
     for (int i = 0; i < 4; i++)  // loop through the module indexes again
     {
       if (largestVector->getMagnitude() > 1) {
         moduleVelocity[i]->scale(1 / largestVector->getMagnitude());    // scale the vector sizes down to 1
         if (moduleVelocity[i]->getMagnitude() <= 0.01) {
-          moduleVelocity[i]->set(0, 0, 0);
+          moduleVelocity[i]->set(0, 0);
         }
       }
       

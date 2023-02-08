@@ -1,6 +1,6 @@
 #pragma once
 #include "frc/Joystick.h"
-#include "Utilities/Vector.h"
+#include "Vector.h"
 #include <frc/smartdashboard/SmartDashboard.h>
 
 class LogitechJoystick
@@ -16,7 +16,7 @@ public:
     LogitechJoystick(frc::Joystick *interlink)
     {
         this->interlink = interlink;
-        fieldVelocitySetpoint = new Vector(0, 0, false);
+        fieldVelocitySetpoint = new Vector();
     }
 
 
@@ -35,7 +35,7 @@ public:
         {
             y = -1 * (interlink->GetY());
         }
-        fieldVelocitySetpoint->set(x, y, 0);
+        fieldVelocitySetpoint->set(x, y);
         return fieldVelocitySetpoint;
     }
 

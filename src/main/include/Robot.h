@@ -21,7 +21,7 @@ class Robot : public frc::TimedRobot
 public:
   double robotAccel = 0.05;      // acceleration rate of the robot speed on the field
   double robotTurnAccel = 0.05; // acceleration rate of robot steering rate
-  double robotSpeed = 1.0;      // maximum speed of field travel in the x or y direction - do not set > 1
+  double robotSpeed = 0.6;      // maximum speed of field travel in the x or y direction - do not set > 1
   double robotTurnSpeed = 0.3;  // maximum turning speed - do not set > 1
   double moduleSteeringMotorP = 1;
   /**
@@ -31,7 +31,7 @@ public:
   double autoSetpoints[10][4] =
   {
     {0,0,0,0},  // #1
-    {0,39,0,2},  // #2
+    {0,78.5,90,2},  // #2
     {0,0,0,2},  // #3
     {0,0,0,0},  // #4
     {0,0,0,0},  // #5
@@ -53,8 +53,8 @@ public:
   double rotationRateSetpoint;
 
 
-  frc::Joystick controller{1};       // does the necessary adjustments for the flight simulator controller and creates a field
-  LogitechJoystick *teleopController = new LogitechJoystick(&controller); // velocity vector for the FOC update method
+  frc::Joystick controller{0};       // does the necessary adjustments for the flight simulator controller and creates a field
+  InterlinkXController *teleopController = new InterlinkXController(&controller); // velocity vector for the FOC update method
   // swerve module drive motors:
   WPI_TalonFX driveMotor1{11};
   WPI_TalonFX driveMotor2{12};
