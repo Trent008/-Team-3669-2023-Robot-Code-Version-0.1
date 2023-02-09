@@ -2,12 +2,10 @@
 
 #include <string>
 #include <frc/TimedRobot.h>
-#include <InterlinkXController.h>
-#include "LogitechJoystick.h"
+#include "SpaceMouse.h"
 #include "FOC.h"
 #include "SwerveModule.h"
 #include "SwerveDrive.h"
-#include <frc/smartdashboard/SendableChooser.h>
 #include <frc/Joystick.h>
 #include "ctre/phoenix.h"
 #include <rev/CANSparkMax.h>
@@ -21,9 +19,6 @@ class Robot : public frc::TimedRobot
 public:
   double robotAccel = 0.05;      // acceleration rate of the robot speed on the field
   double robotTurnAccel = 0.05; // acceleration rate of robot steering rate
-  double robotSpeed = 0.6;      // maximum speed of field travel in the x or y direction - do not set > 1
-  double robotTurnSpeed = 0.3;  // maximum turning speed - do not set > 1
-  double moduleSteeringMotorP = 1;
   /**
    * the coordinates, angles, and wait times 
    * for the autonomous routine
@@ -53,8 +48,8 @@ public:
   double rotationRateSetpoint;
 
 
-  frc::Joystick controller{0};       // does the necessary adjustments for the flight simulator controller and creates a field
-  InterlinkXController *teleopController = new InterlinkXController(&controller); // velocity vector for the FOC update method
+  frc::Joystick controller1{0};
+  SpaceMouse drivingSpaceMouse{&controller1};
   // swerve module drive motors:
   WPI_TalonFX driveMotor1{11};
   WPI_TalonFX driveMotor2{12};
@@ -71,18 +66,18 @@ public:
   rev::CANSparkMax steeringMotor3{33, rev::CANSparkMax::MotorType::kBrushless};
   rev::CANSparkMax steeringMotor4{34, rev::CANSparkMax::MotorType::kBrushless};
   // swerve module objects:
-  SwerveModule *m1 = new SwerveModule{&driveMotor1, &steeringMotor1, &encoder1, -1, 1, moduleSteeringMotorP};
-  SwerveModule *m2 = new SwerveModule{&driveMotor2, &steeringMotor2, &encoder2, -1, -1, moduleSteeringMotorP};
-  SwerveModule *m3 = new SwerveModule{&driveMotor3, &steeringMotor3, &encoder3, 1, 1, moduleSteeringMotorP};
-  SwerveModule *m4 = new SwerveModule{&driveMotor4, &steeringMotor4, &encoder4, 1, -1, moduleSteeringMotorP};
+  SwerveModule *m1 = new SwerveModule{&driveMotor1, &steeringMotor1, &encoder1, -1, 1};
+  SwerveModule *m2 = new SwerveModule{&driveMotor2, &steeringMotor2, &encoder2, -1, -1};
+  SwerveModule *m3 = new SwerveModule{&driveMotor3, &steeringMotor3, &encoder3, 1, 1};
+  SwerveModule *m4 = new SwerveModule{&driveMotor4, &steeringMotor4, &encoder4, 1, -1};
   // swerve module array:
   SwerveModule *modules[4] = {m1, m2, m3, m4};
   
   // field oriented motion control and motion smoothing class:
-  FOC motionController{robotAccel, robotTurnAccel, robotSpeed, robotTurnSpeed};
+  FOC motionController{robotAccel, robotTurnAccel};
   // swerve drive object to control the 4-SwerveModule array using the motion controller object
   SwerveDrive swerve{&motionController, modules};
-  PositionAndAngleTargeting autonomousTargeting{0.04, 0.017, 1.0, 1.0};
+  PositionAndAngleTargeting autonomousTargeting{0.04, 0.007, 1.0, 1.0};
 
   void RobotInit() override;
   void RobotPeriodic() override;
@@ -98,9 +93,5 @@ public:
   void SimulationPeriodic() override;
 
 private:
-  frc::SendableChooser<std::string> m_chooser;
-  const std::string kAutoNameDefault = "Default";
-  const std::string kAutoNameCustom = "My Auto";
-  std::string m_autoSelected;
-  frc::Timer auto_timer;
+  
 };

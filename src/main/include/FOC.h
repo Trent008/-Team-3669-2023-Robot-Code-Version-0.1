@@ -22,12 +22,10 @@ private:
     double navXAngle;   // angle reported from the NavX2
     double rotationalAccelleration; // rate to accelerate the rotation rate input
     double velocityAccelleration;   // rate to accelerate the velocity input
-    double drivingSpeed;    // how to scale the field velocity input
-    double steeringSpeed;   // how to scale the robot rotation rate input
     AHRS navx{frc::SPI::Port::kMXP}; // NavX V2 object
 
 public:
-    FOC(double velocityAcceleration, double rotationalAccelleration, double drivingSpeed, double steeringSpeed)
+    FOC(double velocityAcceleration, double rotationalAccelleration)
     {
         setpointFieldVelocity = new Vector();
         fieldVelocity = new Vector();
@@ -37,8 +35,6 @@ public:
         rotationRate = 0;
         this->velocityAccelleration = velocityAcceleration;
         this->rotationalAccelleration = rotationalAccelleration;
-        this->drivingSpeed = drivingSpeed;
-        this->steeringSpeed = steeringSpeed;
     }
 
     /**
@@ -50,20 +46,30 @@ public:
         navXAngle = navx.GetYaw();
         /**--------------Field Velocity Accelleration--------------**/
         this->setpointFieldVelocity->set(setpointFieldVelocity);
-        this->setpointFieldVelocity->scale(drivingSpeed);
         fieldVelocityError->set(this->setpointFieldVelocity);
         fieldVelocityError->subtractVector(fieldVelocity);
-        if (fieldVelocityError->getMagnitude() > 0.04) // prevents divide by zero errors, and can prevent jitter
+        if (fieldVelocityError->getMagnitude() > 0.1) // prevents divide by zero errors, and can prevent jitter
         {
             fieldVelocityError->scale(velocityAccelleration / fieldVelocityError->getMagnitude());
             fieldVelocity->addVector(fieldVelocityError);
         }
+        else
+        {
+            fieldVelocityError->scale(0.5);
+            fieldVelocity->addVector(fieldVelocityError);
+        }
+
         /**-----------------Rotation Rate Accelleration-----------------**/
-        this->rotationRateSetpoint = rotationRateSetpoint * steeringSpeed;
-        if (std::abs(this->rotationRateSetpoint - rotationRate) > 0.04) // prevents divide by zero errors, and can prevent jitter
+        this->rotationRateSetpoint = rotationRateSetpoint;
+        if (std::abs(this->rotationRateSetpoint - rotationRate) > 0.1) // prevents divide by zero errors, and can prevent jitter
         {
             rotationRate += rotationalAccelleration * (this->rotationRateSetpoint - rotationRate)/std::abs(this->rotationRateSetpoint - rotationRate);
         }
+        else
+        {
+            rotationRate += (this->rotationRateSetpoint - rotationRate)/2.0;
+        }
+
         /**------------Field Oriented Control------------**/
         robotVelocity->set(fieldVelocity);
         robotVelocity->rotate(-navXAngle);

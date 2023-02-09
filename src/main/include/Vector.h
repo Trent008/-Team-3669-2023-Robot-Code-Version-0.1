@@ -60,6 +60,11 @@ class Vector {
             this->y *= scaleValue;
         }
 
+        // scale the vector from its unit vector
+        void scaleFromUnitVector(double scaleValue) {
+            scale(1.0/getMagnitude());
+        }
+
         double getX() { return x; }
 
         double getY() { return y; }
