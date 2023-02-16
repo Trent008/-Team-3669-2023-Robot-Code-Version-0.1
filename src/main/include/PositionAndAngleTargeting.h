@@ -14,10 +14,10 @@ class PositionAndAngleTargeting
         double angleProportional;   // rate at which to approach the target angle
         double maxDriveRate;
         double maxRotationRate;
-        Vector *positionError;      // how fast the robot needs to move to get to its next position setpoint
+        Vector positionError;      // how fast the robot needs to move to get to its next position setpoint
         AngleChooser angleChooser{};    // finds the most efficient way for the robot to turn to a given angle
         double angleError;          // how fast the robot needs to turn to get to its next angle setpoint
-        Vector *distanceFromPositionTarget; // how far the robot is from its next position setpoint
+        Vector distanceFromPositionTarget; // how far the robot is from its next position setpoint
         double distanceFromAngleTarget; // how far the robot is from its next angle setpoint
 
     public:
@@ -26,21 +26,17 @@ class PositionAndAngleTargeting
             this->angleProportional = angleProportional;
             this->maxDriveRate = maxDriveRate;
             this->maxRotationRate = maxRotationRate;
-            positionError = new Vector();
-            distanceFromPositionTarget = new Vector();
         }
 
         /**
          * Returns:
          * velocity vector in the direction of the next position setpoint
          * */
-        Vector *targetPosition(Vector *currentPosition, Vector *targetPosition) {
-            distanceFromPositionTarget->set(targetPosition);
-            distanceFromPositionTarget->subtractVector(currentPosition);    // find the difference betweent the target position and the current position
-            positionError->set(distanceFromPositionTarget);     
-            positionError->scale(positionProportional);     // multiply the difference by the proportional value
-            if(positionError->getMagnitude() > maxDriveRate) {
-                positionError->scale(maxDriveRate / positionError->getMagnitude());     // limit the difference to the maxSpeed value
+        Vector targetPosition(Vector currentPosition, Vector targetPosition) {
+            distanceFromPositionTarget = targetPosition - currentPosition;    // find the difference betweent the target position and the current position
+            positionError = distanceFromPositionTarget * positionProportional;     // multiply the difference by the proportional value
+            if(abs(positionError) > maxDriveRate) {
+                positionError *= maxDriveRate / abs(positionError);     // limit the difference to the maxSpeed value
             }
             return positionError;
         }

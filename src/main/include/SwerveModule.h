@@ -8,7 +8,7 @@
 class SwerveModule
 {
 private:
-    Vector *turnVector;     // vector corresponding to the way the rotation rate adds to the swerve module velocity
+    Vector turnVector;     // vector corresponding to the way the rotation rate adds to the swerve module velocity
     double wheelDirection = 0;  // direction of the wheel depending on whether the wheel is drivinging forward or backward
     double wheelSpeed = 0;
     double angleError = 0;
@@ -21,7 +21,7 @@ private:
     WPI_TalonFX* driveMotor;
     rev::CANSparkMax* steeringMotor;
     CANCoder* wheelEncoder;
-    Vector *wheelPositionChange;
+    Vector wheelPositionChange;
 
 public:
     /**
@@ -35,37 +35,39 @@ public:
         this->steeringMotor = steeringMotor;
         this->wheelEncoder = wheelEncoder;
         this->steeringMotorP = steeringMotorP;
-        turnVector = new Vector(posX, posY);
-        turnVector->rotate(90);
-        wheelPositionChange = new Vector();
+        turnVector = Vector{posX, posY};
+        turnVector.rotate(90);
     }
 
     // returns the angle the wheel needs to turn to
-
-    void findSpeedAndAngleError(Vector *velocity)
+    void findSpeedAndAngleError(Vector velocity)
     {
         angleWheel = wheelEncoder->GetAbsolutePosition();
-        angleSetpoint = velocity->getAngle();
+        angleSetpoint = angle(velocity);
         angleError = angleChooser.getShortestAngle(angleWheel, angleSetpoint);
         wheelDirection = angleChooser.getDirection();
-        wheelSpeed = wheelDirection * velocity->getMagnitude();
+        wheelSpeed = wheelDirection * abs(velocity);
     }
 
-    void Set(Vector *velocity) {
+    void Set(Vector velocity) {  // todo: change to velocity mode
         findSpeedAndAngleError(velocity);
         driveMotor->Set(wheelSpeed);
         steeringMotor->Set(angleError * (-steeringMotorP) / 180);
         currentPosition = driveMotor->GetSelectedSensorPosition(0);
-        wheelPositionChange->setPolar(currentPosition - lastPosition, wheelEncoder->GetAbsolutePosition());
+        wheelPositionChange.setPolar(currentPosition - lastPosition, wheelEncoder->GetAbsolutePosition());
         lastPosition = currentPosition;
     }
 
-    Vector *getTurnVector()
+    Vector getTurnVector()
     {
         return turnVector;
     }
 
-    Vector *getwheelPositionChange() {
+    double getWheelSpeed() {
+        return wheelSpeed;
+    }
+
+    Vector getwheelPositionChange() {
         return wheelPositionChange;
     }
 };

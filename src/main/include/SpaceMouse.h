@@ -7,61 +7,49 @@ class SpaceMouse
 {
 private:
     frc::Joystick *joy;
-    Vector *velocity;
-    Vector *lastPosition;
-    Vector *position;
-    double change;
-    double lastValue;
-    double value;
+    double speed;
+    double change[6];
+    double lastValue[6], value[6];
+    int cycles = 0;
 
 public:
     // SpaceMouse as joystick
     SpaceMouse(frc::Joystick *joy)
     {
         this->joy = joy;
-        velocity = new Vector();
-        position = new Vector();
-        lastPosition = new Vector();
     }
 
     /**
-     * returns a vector using right joystick of the controller
-     * for controlling the field position of the robot
+     * resets the spaceMouse last position variable
+     * to the current output
      * */
-    Vector *getFieldVelocity() {
-        position->set(joy->GetX(), -joy->GetY());
-        velocity->set(position);
-        velocity->subtractVector(lastPosition);
-        lastPosition->set(position);
-        return velocity;
+    void initialize(double speed) {
+        this->speed = speed;
+        for (int i = 0; i < 6; i++) {
+            lastValue[i] = joy->GetRawAxis(i);
+        }
     }
 
-    // gets the controller z-axis value, the left joystick horizontal movement
-    double getZ()
-    {
-        value = joy->GetRawAxis(5);
-        change = value - lastValue;
-        lastValue = value;
-        return change;
+    void update() {
+        if (cycles == 3) {
+            for (int i = 0; i < 6; i++) {
+                value[i] = joy->GetRawAxis(i);
+                change[i] = value[i] - lastValue[i];
+                if (change[i] > .9) {
+                    change[i] -= 2.0;
+                }
+                if (change[i] < -.9) {
+                    change[i] += 2.0;
+                }
+                lastValue[i] = value[i];
+                change[i] *= speed/3.0;
+            }
+            cycles = 0;
+        }
+        cycles++;
     }
 
-
-    Vector *getArmVelocity() {
-        position->set(-joy->GetY(), -joy->GetZ());
-        velocity->set(position);
-        velocity->subtractVector(lastPosition);
-        lastPosition->set(position);
-        return velocity;
-    }
-    
-    double getArmTwist() {
-        return -joy->GetRawAxis(4);
-    }
-
-    double getArmWrist() {
-        value = joy->GetRawAxis(3);
-        change = value - lastValue;
-        lastValue = value;
-        return change;
+    double getAxis(int number) {
+        return change[number];
     }
 };

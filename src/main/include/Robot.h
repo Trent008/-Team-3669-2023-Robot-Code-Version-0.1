@@ -2,7 +2,10 @@
 
 #include <string>
 #include <frc/TimedRobot.h>
+#include "InterLinkX.h"
 #include "SpaceMouse.h"
+#include "SpaceMouseEnt.h"
+#include "XBOXController.h"
 #include "FOC.h"
 #include "SwerveModule.h"
 #include "SwerveDrive.h"
@@ -16,8 +19,10 @@
 
 class Robot : public frc::TimedRobot
 {
+
 public:
-  double robotAccel = 0.05;      // acceleration rate of the robot speed on the field
+  double deadband = 0.08;
+  double robotAccel = 0.03;      // acceleration rate of the robot speed on the field
   double robotTurnAccel = 0.05; // acceleration rate of robot steering rate
   /**
    * the coordinates, angles, and wait times 
@@ -39,17 +44,25 @@ public:
   AutoSetpointList setpointList{autoSetpoints};
   int setpointIndex = 0;  // keeps track of the index of the point the robot needs to go to during the autonomous
   
-  Vector *positionSetpoint;
-  Vector *currentPosition;
-  Vector *fieldVelocitySetpoint;
+  Vector positionSetpoint;
+  Vector currentPosition;
+  Vector fieldVelocitySetpoint;
+  Vector spaceMouseSpeed;
   
   double angleSetpoint;
   double currentAngle;
   double rotationRateSetpoint;
 
+  double extensionSetpoint;
+  double currentExtension;
+  double extensionRateSetpoint;
+
 
   frc::Joystick controller1{0};
+  XBOXController xBoxC{&controller1};
+  InterLinkX interLink{&controller1};
   SpaceMouse drivingSpaceMouse{&controller1};
+  SpaceMouseEnt sM{&controller1};
   // swerve module drive motors:
   WPI_TalonFX driveMotor1{11};
   WPI_TalonFX driveMotor2{12};
@@ -66,10 +79,10 @@ public:
   rev::CANSparkMax steeringMotor3{33, rev::CANSparkMax::MotorType::kBrushless};
   rev::CANSparkMax steeringMotor4{34, rev::CANSparkMax::MotorType::kBrushless};
   // swerve module objects:
-  SwerveModule *m1 = new SwerveModule{&driveMotor1, &steeringMotor1, &encoder1, -1, 1};
-  SwerveModule *m2 = new SwerveModule{&driveMotor2, &steeringMotor2, &encoder2, -1, -1};
-  SwerveModule *m3 = new SwerveModule{&driveMotor3, &steeringMotor3, &encoder3, 1, 1};
-  SwerveModule *m4 = new SwerveModule{&driveMotor4, &steeringMotor4, &encoder4, 1, -1};
+  SwerveModule *m1 = new SwerveModule{&driveMotor1, &steeringMotor1, &encoder1, -.7, 1};
+  SwerveModule *m2 = new SwerveModule{&driveMotor2, &steeringMotor2, &encoder2, -.7, -1};
+  SwerveModule *m3 = new SwerveModule{&driveMotor3, &steeringMotor3, &encoder3, .7, 1};
+  SwerveModule *m4 = new SwerveModule{&driveMotor4, &steeringMotor4, &encoder4, .7, -1};
   // swerve module array:
   SwerveModule *modules[4] = {m1, m2, m3, m4};
   
@@ -78,6 +91,16 @@ public:
   // swerve drive object to control the 4-SwerveModule array using the motion controller object
   SwerveDrive swerve{&motionController, modules};
   PositionAndAngleTargeting autonomousTargeting{0.04, 0.007, 1.0, 1.0};
+
+  // leadscrew motors and PID controllers
+  rev::CANSparkMax leftLeadscrewM{41, rev::CANSparkMax::MotorType::kBrushless};
+  rev::CANSparkMax rightLeadscrewM{42, rev::CANSparkMax::MotorType::kBrushless};
+  rev::SparkMaxPIDController left_leadscrew = leftLeadscrewM.GetPIDController();
+  rev::SparkMaxPIDController right_leadscrew = rightLeadscrewM.GetPIDController();
+
+  // arm extension motor
+  rev::CANSparkMax armExtender{43, rev::CANSparkMax::MotorType::kBrushless};
+  rev::SparkMaxPIDController armExtenderPID = armExtender.GetPIDController();
 
   void RobotInit() override;
   void RobotPeriodic() override;

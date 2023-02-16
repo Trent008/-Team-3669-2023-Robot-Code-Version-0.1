@@ -12,13 +12,10 @@ class FOC
 
 {
 private:
-    Vector *setpointFieldVelocity; // field velocity from the teleop/auto controller
-    Vector *fieldVelocity;  // smoothed/accellerated field velocity
-    Vector *fieldVelocityError; // difference between the current field velocity and the setpoint
-    Vector *robotVelocity; // field re-oriented velocity
-    Vector *fieldPosition; // robot's position on the field
-    double rotationRate; // current rotation rate
-    double rotationRateSetpoint; // scaled rotation rate setpoint
+    Vector fieldVelocity;  // smoothed/accellerated field velocity
+    Vector fieldVelocityError; // difference between the current field velocity and the setpoint
+    Vector robotVelocity; // field re-oriented velocity
+    double rotationRate = 0; // current rotation rate
     double navXAngle;   // angle reported from the NavX2
     double rotationalAccelleration; // rate to accelerate the rotation rate input
     double velocityAccelleration;   // rate to accelerate the velocity input
@@ -27,12 +24,6 @@ private:
 public:
     FOC(double velocityAcceleration, double rotationalAccelleration)
     {
-        setpointFieldVelocity = new Vector();
-        fieldVelocity = new Vector();
-        fieldVelocityError = new Vector();
-        robotVelocity = new Vector();
-        fieldPosition = new Vector();
-        rotationRate = 0;
         this->velocityAccelleration = velocityAcceleration;
         this->rotationalAccelleration = rotationalAccelleration;
     }
@@ -41,38 +32,35 @@ public:
      *  sets the field oriented and smoothed x velocity, 
      *  y velocity, and rotation rate for the robot
      * */
-    void update(Vector *setpointFieldVelocity, double rotationRateSetpoint)
+    void update(Vector setpointFieldVelocity, double rotationRateSetpoint)
     {
         navXAngle = navx.GetYaw();
         /**--------------Field Velocity Accelleration--------------**/
-        this->setpointFieldVelocity->set(setpointFieldVelocity);
-        fieldVelocityError->set(this->setpointFieldVelocity);
-        fieldVelocityError->subtractVector(fieldVelocity);
-        if (fieldVelocityError->getMagnitude() > 0.1) // prevents divide by zero errors, and can prevent jitter
+        fieldVelocityError = setpointFieldVelocity - fieldVelocity;
+        if (abs(fieldVelocityError) > 2*velocityAccelleration) // prevents divide by zero errors and jitter
         {
-            fieldVelocityError->scale(velocityAccelleration / fieldVelocityError->getMagnitude());
-            fieldVelocity->addVector(fieldVelocityError);
+            fieldVelocityError *= velocityAccelleration / abs(fieldVelocityError);
+            fieldVelocity += fieldVelocityError;
         }
         else
         {
-            fieldVelocityError->scale(0.5);
-            fieldVelocity->addVector(fieldVelocityError);
+            fieldVelocityError /= 2;
+            fieldVelocity += fieldVelocityError;
         }
 
         /**-----------------Rotation Rate Accelleration-----------------**/
-        this->rotationRateSetpoint = rotationRateSetpoint;
-        if (std::abs(this->rotationRateSetpoint - rotationRate) > 0.1) // prevents divide by zero errors, and can prevent jitter
+        if (std::abs(rotationRateSetpoint - rotationRate) > 2.0*rotationalAccelleration) // prevents divide by zero errors and jitter
         {
-            rotationRate += rotationalAccelleration * (this->rotationRateSetpoint - rotationRate)/std::abs(this->rotationRateSetpoint - rotationRate);
+            rotationRate += rotationalAccelleration * (rotationRateSetpoint - rotationRate)/std::abs(rotationRateSetpoint - rotationRate);
         }
         else
         {
-            rotationRate += (this->rotationRateSetpoint - rotationRate)/2.0;
+            rotationRate += (rotationRateSetpoint - rotationRate)/2.0;
         }
 
         /**------------Field Oriented Control------------**/
-        robotVelocity->set(fieldVelocity);
-        robotVelocity->rotate(-navXAngle);
+        robotVelocity = fieldVelocity;
+        robotVelocity.rotate(-navXAngle);
     }
     
     /**
@@ -89,7 +77,7 @@ public:
      * Returns:
      * field reoriented robot velocity
      * */
-    Vector *getRobotVelocity(){
+    Vector getRobotVelocity(){
         return robotVelocity;
     }
 

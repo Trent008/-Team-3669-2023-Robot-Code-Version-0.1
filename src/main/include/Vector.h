@@ -1,75 +1,115 @@
 #pragma once
 #include "cmath"
 #include "math.h"
-class Vector {
-    private:
-        double x, y, x_new, y_new;
 
-    public:
-        // Default constructor
-        Vector() {
-            this->x = 0;
-            this->y = 0;
-        }
+class Vector
+{
+private:
+    double x, y, x_new, y_new;
 
-        Vector(double x, double y) {
-            this->x = x;
-            this->y = y;
-        }
+public:
+    // Default constructor
+    Vector()
+    {
+        this->x = 0;
+        this->y = 0;
+    }
 
-        // Method to set the coordinates as polar
-        void setPolar(double magnitude, double angle) {
-            this->x = magnitude * sin(angle*M_PI/180);
-            this->y = magnitude * cos(angle*M_PI/180);
-        }
+    Vector(double x, double y)
+    {
+        this->x = x;
+        this->y = y;
+    }
 
-        // Method to set the coordinates as cartesian
-        void set(double x, double y) {
-            this->x = x;
-            this->y = y;
-        }
+    // Method to set the coordinates as polar
+    void setPolar(double magnitude, double angle)
+    {
+        this->x = magnitude * sin(angle * M_PI / 180);
+        this->y = magnitude * cos(angle * M_PI / 180);
+    }
 
-        void set(Vector *other) {
-            this->x = other->getX();
-            this->y = other->getY();
-        }
+    // Method to rotate the vector by a given angle
+    void rotate(double angle)
+    {
+        x_new = x * cos(-angle * M_PI / 180) - y * sin(-angle * M_PI / 180);
+        y_new = x * sin(-angle * M_PI / 180) + y * cos(-angle * M_PI / 180);
+        x = x_new;
+        y = y_new;
+    }
 
-        // Method to rotate the vector by a given angle
-        void rotate(double angle) {
-            x_new = x * cos(-angle*M_PI/180) - y * sin(-angle*M_PI/180);
-            y_new = x * sin(-angle*M_PI/180) + y * cos(-angle*M_PI/180);
-            x = x_new;
-            y = y_new;
-        }
+    void operator=(Vector const &obj)
+    {
+        x = obj.x;
+        y = obj.y;
+    }
 
-        // Method to add another vector to this vector
-        void addVector(Vector *other) {
-            this->x += other->getX();
-            this->y += other->getY();
-        }
+    Vector operator+(Vector const &obj)
+    {
+        Vector res;
+        res.x = x + obj.x;
+        res.y = y + obj.y;
+        return res;
+    }
 
-        // Method to subtract another vector from this vector
-        void subtractVector(Vector *other) {
-            this->x -= other->getX();
-            this->y -= other->getY();
-        }
+    Vector operator-(Vector const &obj)
+    {
+        Vector res;
+        res.x = x - obj.x;
+        res.y = y - obj.y;
+        return res;
+    }
 
-        // Method to scale the vector by a given value
-        void scale(double scaleValue) {
-            this->x *= scaleValue;
-            this->y *= scaleValue;
-        }
+    Vector operator*(double const &val)
+    {
+        Vector res;
+        res.x = x * val;
+        res.y = y * val;
+        return res;
+    }
 
-        // scale the vector from its unit vector
-        void scaleFromUnitVector(double scaleValue) {
-            scale(1.0/getMagnitude());
-        }
+    Vector operator/(double const &val)
+    {
+        Vector res;
+        res.x = x / val;
+        res.y = y / val;
+        return res;
+    }
 
-        double getX() { return x; }
+    void operator*=(double const &val)
+    {
+        x *= val;
+        y *= val;
+    }
 
-        double getY() { return y; }
+    void operator/=(double const &val)
+    {
+        x /= val;
+        y /= val;
+    }
 
-        double getAngle() { return atan2(x, y)*180/M_PI; }
+    void operator+=(Vector const &obj)
+    {
+        x += obj.x;
+        y += obj.y;
+    }
 
-        double getMagnitude() { return sqrt(pow(x,2) + pow(y,2)); }
+    void operator-=(Vector const &obj)
+    {
+        x -= obj.x;
+        y -= obj.y;
+    }
+
+    double getX() { return x; }
+
+    double getY() { return y; }
 };
+
+double abs(Vector &obj)
+{
+    return hypot(obj.getX(), obj.getY());
+}
+
+double angle(Vector &obj)
+{
+    return atan2(obj.getX(), obj.getY()) * 180 / M_PI;
+}

@@ -8,16 +8,21 @@
 #include <frc/smartdashboard/SmartDashboard.h>
 
 void Robot::RobotInit() {
-  driveMotor1.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
-  driveMotor2.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
-  driveMotor3.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
-  driveMotor4.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
+  // swerve motor config
+  driveMotor1.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 20);
+  driveMotor2.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 20);
+  driveMotor3.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 20);
+  driveMotor4.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 20);
+
+  // arm motor config
+  left_leadscrew.SetP(0.1);
+  right_leadscrew.SetP(0.1);
+  armExtenderPID.SetP(0.1);
 }
 
 void Robot::RobotPeriodic() {}
 
 void Robot::AutonomousInit() {
-  motionController.update(new Vector(), 0);
   driveMotor1.SetSelectedSensorPosition(0);
   driveMotor2.SetSelectedSensorPosition(0);
   driveMotor3.SetSelectedSensorPosition(0);
@@ -26,8 +31,8 @@ void Robot::AutonomousInit() {
 }
 
 void Robot::AutonomousPeriodic() {
-  positionSetpoint = setpointList.getPosition(setpointIndex);
   currentPosition = swerve.getPosition();
+  positionSetpoint = setpointList.getPosition(setpointIndex);
   fieldVelocitySetpoint = autonomousTargeting.targetPosition(currentPosition, positionSetpoint);
   
   angleSetpoint = setpointList.getAngle(setpointIndex);
@@ -40,24 +45,21 @@ void Robot::AutonomousPeriodic() {
 }
 
 void Robot::TeleopInit() {
+
   driveMotor1.SetSelectedSensorPosition(0);
   driveMotor2.SetSelectedSensorPosition(0);
   driveMotor3.SetSelectedSensorPosition(0);
   driveMotor4.SetSelectedSensorPosition(0);
-
+  drivingSpaceMouse.initialize(20);
 }
 
 void Robot::TeleopPeriodic() {
-    currentPosition = swerve.getPosition();
-    positionSetpoint->addVector(drivingSpaceMouse.getFieldVelocity());
-    fieldVelocitySetpoint = autonomousTargeting.targetPosition(currentPosition, positionSetpoint);
-    
-    currentAngle = motionController.getRobotAngle();
-    angleSetpoint += drivingSpaceMouse.getZ();
-    rotationRateSetpoint = autonomousTargeting.targetAngle(currentAngle, angleSetpoint);
-    
-    motionController.update(fieldVelocitySetpoint, rotationRateSetpoint);
+    drivingSpaceMouse.update();
+    motionController.update(Vector{sM.x(), sM.y()}, sM.zr());
     swerve.run();
+
+    //extensionSetpoint += 0.2*interLink.getX();
+    //armExtenderPID.SetReference(extensionSetpoint, rev::CANSparkMax::ControlType::kPosition);
 }
 
 void Robot::DisabledInit() {}
