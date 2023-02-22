@@ -51,10 +51,10 @@ public:
 
     void Set(Vector velocity) {  // todo: change to velocity mode
         findSpeedAndAngleError(velocity);
-        driveMotor->Set(wheelSpeed);
+        driveMotor->Set(wheelSpeed);//ControlMode::Velocity, wheelSpeed*6380*2048/600);
         steeringMotor->Set(angleError * (-steeringMotorP) / 180);
         currentPosition = driveMotor->GetSelectedSensorPosition(0);
-        wheelPositionChange.setPolar(currentPosition - lastPosition, wheelEncoder->GetAbsolutePosition());
+        wheelPositionChange = Polar(currentPosition - lastPosition, wheelEncoder->GetAbsolutePosition());
         lastPosition = currentPosition;
     }
 

@@ -18,6 +18,8 @@ void Robot::RobotInit() {
   left_leadscrew.SetP(0.1);
   right_leadscrew.SetP(0.1);
   armExtenderPID.SetP(0.1);
+  wristPID.SetP(0.1);
+  twistPID.SetP(0.1);
 }
 
 void Robot::RobotPeriodic() {}
@@ -45,26 +47,34 @@ void Robot::AutonomousPeriodic() {
 }
 
 void Robot::TeleopInit() {
-
-  driveMotor1.SetSelectedSensorPosition(0);
-  driveMotor2.SetSelectedSensorPosition(0);
-  driveMotor3.SetSelectedSensorPosition(0);
-  driveMotor4.SetSelectedSensorPosition(0);
-  drivingSpaceMouse.initialize(20);
+  SMPro.initialize();
 }
 
 void Robot::TeleopPeriodic() {
-    drivingSpaceMouse.update();
-    motionController.update(Vector{sM.x(), sM.y()}, sM.zr());
+    if (xboxC.getAPressed()) {motionController.zeroYaw();}
+
+    SMPro.update();
+    motionController.update(Vector{xboxC.getX(), xboxC.getY()}, xboxC.getZR());
     swerve.run();
 
-    //extensionSetpoint += 0.2*interLink.getX();
-    //armExtenderPID.SetReference(extensionSetpoint, rev::CANSparkMax::ControlType::kPosition);
+    arm.update(Vector{SMPro.getY(), SMPro.getZ()}, SMPro.getYR(), SMPro.getXR());
+    pump1.Set(arm.pumpPercent(pressure1.Get()));
+    pump2.Set(arm.pumpPercent(pressure2.Get()));
+    isHoldingCone = (SMPro.getCTRLPressed()) ? !isHoldingCone : isHoldingCone;
+    suctionCup1.Set(isHoldingCone);
+    suctionCup2.Set(isHoldingCone);
+     armExtenderPID.SetReference(arm.getArmExtension(), rev::CANSparkMax::ControlType::kPosition);
+     left_leadscrew.SetReference(arm.getLeadscrewExtension(), rev::CANSparkMax::ControlType::kPosition);
+     right_leadscrew.SetReference(arm.getLeadscrewExtension(), rev::CANSparkMax::ControlType::kPosition);
+     wristPID.SetReference(arm.getWristSetpoint(), rev::CANSparkMax::ControlType::kPosition);
+     if (SMPro.get1Pressed()) {  arm.setArmPosition(Vector{10, 7}, -7);  }
+     if (SMPro.getESCPressed()) {  arm.setArmPosition(Vector{-9, 13}, 10);  }
 }
 
 void Robot::DisabledInit() {}
 
-void Robot::DisabledPeriodic() {}
+void Robot::DisabledPeriodic() {
+}
 
 void Robot::TestInit() {}
 

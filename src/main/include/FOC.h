@@ -8,17 +8,17 @@
  * converts field velocity input to velocity relative to the robot
  * after smoothing the field velocity input
  * */
-class FOC 
+class FOC
 
 {
 private:
-    Vector fieldVelocity;  // smoothed/accellerated field velocity
-    Vector fieldVelocityError; // difference between the current field velocity and the setpoint
-    Vector robotVelocity; // field re-oriented velocity
-    double rotationRate = 0; // current rotation rate
-    double navXAngle;   // angle reported from the NavX2
-    double rotationalAccelleration; // rate to accelerate the rotation rate input
-    double velocityAccelleration;   // rate to accelerate the velocity input
+    Vector fieldVelocity{0,0};            // smoothed/accellerated field velocity
+    Vector fieldVelocityError;       // difference between the current field velocity and the setpoint
+    Vector robotVelocity;            // field re-oriented velocity
+    double rotationRate = 0;         // current rotation rate
+    double navXAngle;                // angle reported from the NavX2
+    double rotationalAccelleration;  // rate to accelerate the rotation rate input
+    double velocityAccelleration;    // rate to accelerate the velocity input
     AHRS navx{frc::SPI::Port::kMXP}; // NavX V2 object
 
 public:
@@ -29,7 +29,7 @@ public:
     }
 
     /**
-     *  sets the field oriented and smoothed x velocity, 
+     *  sets the field oriented and smoothed x velocity,
      *  y velocity, and rotation rate for the robot
      * */
     void update(Vector setpointFieldVelocity, double rotationRateSetpoint)
@@ -37,7 +37,7 @@ public:
         navXAngle = navx.GetYaw();
         /**--------------Field Velocity Accelleration--------------**/
         fieldVelocityError = setpointFieldVelocity - fieldVelocity;
-        if (abs(fieldVelocityError) > 2*velocityAccelleration) // prevents divide by zero errors and jitter
+        if (abs(fieldVelocityError) > 2 * velocityAccelleration) // prevents divide by zero errors and jitter
         {
             fieldVelocityError *= velocityAccelleration / abs(fieldVelocityError);
             fieldVelocity += fieldVelocityError;
@@ -49,20 +49,20 @@ public:
         }
 
         /**-----------------Rotation Rate Accelleration-----------------**/
-        if (std::abs(rotationRateSetpoint - rotationRate) > 2.0*rotationalAccelleration) // prevents divide by zero errors and jitter
+        if (std::abs(rotationRateSetpoint - rotationRate) > 2.0 * rotationalAccelleration) // prevents divide by zero errors and jitter
         {
-            rotationRate += rotationalAccelleration * (rotationRateSetpoint - rotationRate)/std::abs(rotationRateSetpoint - rotationRate);
+            rotationRate += rotationalAccelleration * (rotationRateSetpoint - rotationRate) / std::abs(rotationRateSetpoint - rotationRate);
         }
         else
         {
-            rotationRate += (rotationRateSetpoint - rotationRate)/2.0;
+            rotationRate += (rotationRateSetpoint - rotationRate) / 2.0;
         }
 
         /**------------Field Oriented Control------------**/
         robotVelocity = fieldVelocity;
         robotVelocity.rotate(-navXAngle);
     }
-    
+
     /**
      * Returns:
      * NavX2 yaw angle
@@ -77,7 +77,8 @@ public:
      * Returns:
      * field reoriented robot velocity
      * */
-    Vector getRobotVelocity(){
+    Vector getRobotVelocity()
+    {
         return robotVelocity;
     }
 
@@ -85,7 +86,13 @@ public:
      * Returns:
      * smoothed/accellerated robot rotation rate
      * */
-    double getRotationRate() {
+    double getRotationRate()
+    {
         return rotationRate;
+    }
+
+    void zeroYaw()
+    {
+        navx.ZeroYaw();
     }
 };

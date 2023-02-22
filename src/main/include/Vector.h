@@ -8,24 +8,24 @@ private:
     double x, y, x_new, y_new;
 
 public:
-    // Default constructor
+    /**
+     * x = 0
+     * y = 0
+     **/
     Vector()
     {
         this->x = 0;
         this->y = 0;
     }
 
+    /**
+     * vector.x = x
+     * vector.y = y
+     **/
     Vector(double x, double y)
     {
         this->x = x;
         this->y = y;
-    }
-
-    // Method to set the coordinates as polar
-    void setPolar(double magnitude, double angle)
-    {
-        this->x = magnitude * sin(angle * M_PI / 180);
-        this->y = magnitude * cos(angle * M_PI / 180);
     }
 
     // Method to rotate the vector by a given angle
@@ -102,6 +102,15 @@ public:
     double getX() { return x; }
 
     double getY() { return y; }
+    
+    void setX(double x) {
+        this->x = x;
+    }
+
+    void setY(double y) {
+        this->y = y;
+    }
+
 };
 
 double abs(Vector &obj)
@@ -112,4 +121,10 @@ double abs(Vector &obj)
 double angle(Vector &obj)
 {
     return atan2(obj.getX(), obj.getY()) * 180 / M_PI;
+}
+
+// creates a new vector using polar coordinates
+Vector Polar(double magnitude, double angle)
+{
+    return Vector{magnitude * sin(angle * M_PI / 180), magnitude * cos(angle * M_PI / 180)};
 }

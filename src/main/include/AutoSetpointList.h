@@ -6,8 +6,8 @@
 // autonomous setpoint array.
 class AutoSetpointList {
 private:
-  double mP = 30;
-  double mA = 30;
+  double mP = 10;
+  double mA = 10;
 
 public:
   double p;
@@ -60,7 +60,7 @@ public:
       // set setpoints
       for (double k = 0; k < changeTime; k += 0.02) { //
         if (t < 750) {
-          position.setPolar(1, angle(positionDifference));
+          position = Polar(1, angle(positionDifference));
           position *= getPathValue(k * positionRate, difference, mP);
           position += lastPosition;
           positions[t] = position;

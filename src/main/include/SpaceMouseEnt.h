@@ -9,27 +9,27 @@ class SpaceMouseEnt{
             this->joy = joy;
         }
 
-        double x() {
+        double getX() {
             return joy->GetRawAxis(0);
         }
 
-        double y() {
+        double getY() {
             return -joy->GetRawAxis(1);
         }
 
-        double z() {
+        double getZ() {
             return -joy->GetRawAxis(2)+0.05;
         }
 
-        double xr() {
+        double getXR() {
             return -joy->GetRawAxis(3);
         }
 
-        double yr() {
+        double GetYR() {
             return -joy->GetRawAxis(4);
         }
 
-        double zr() {
+        double GetZR() {
             return joy->GetRawAxis(5);
         }
 };

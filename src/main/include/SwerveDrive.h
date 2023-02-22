@@ -53,9 +53,6 @@ public:
     {
       if (abs(largestVector) > 1.0) {
         moduleVelocity[i] /= abs(largestVector);    // scale the vector sizes down to 1
-        if (abs(moduleVelocity[i]) <= 0.01) {
-          moduleVelocity[i] = Vector{};
-        }
       }
       
       module[i]->Set(moduleVelocity[i]);    // drive the modules

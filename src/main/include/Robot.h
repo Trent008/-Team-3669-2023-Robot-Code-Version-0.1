@@ -2,13 +2,16 @@
 
 #include <string>
 #include <frc/TimedRobot.h>
+#include "frc/DigitalInput.h"
+#include "frc/Solenoid.h"
 #include "InterLinkX.h"
-#include "SpaceMouse.h"
+#include "SpaceMousePro.h"
 #include "SpaceMouseEnt.h"
 #include "XBOXController.h"
 #include "FOC.h"
 #include "SwerveModule.h"
 #include "SwerveDrive.h"
+#include "ArmController.h"
 #include <frc/Joystick.h>
 #include "ctre/phoenix.h"
 #include <rev/CANSparkMax.h>
@@ -23,7 +26,8 @@ class Robot : public frc::TimedRobot
 public:
   double deadband = 0.08;
   double robotAccel = 0.03;      // acceleration rate of the robot speed on the field
-  double robotTurnAccel = 0.05; // acceleration rate of robot steering rate
+  double robotTurnAccel = 0.03; // acceleration rate of robot steering rate
+
   /**
    * the coordinates, angles, and wait times 
    * for the autonomous routine
@@ -58,27 +62,32 @@ public:
   double extensionRateSetpoint;
 
 
-  frc::Joystick controller1{0};
-  XBOXController xBoxC{&controller1};
-  InterLinkX interLink{&controller1};
-  SpaceMouse drivingSpaceMouse{&controller1};
-  SpaceMouseEnt sM{&controller1};
-  // swerve module drive motors:
+  frc::Joystick driveController{0};
+  frc::Joystick armController{1};
+  /* ------ driving controller types ------ */ 
+  XBOXController xboxC{&driveController};
+  InterLinkX interLink{&driveController};
+  SpaceMouseEnt SMEnt{&driveController};
+
+  /* -------- arm controller types -------- */ 
+  SpaceMousePro SMPro{&armController, 20};
+
+ /* -------- swerve drive motors -------- */ 
   WPI_TalonFX driveMotor1{11};
   WPI_TalonFX driveMotor2{12};
   WPI_TalonFX driveMotor3{13};
   WPI_TalonFX driveMotor4{14};
-  // swerve module wheel orientation encoders:
+/* -------- swerve module encoders -------- */ 
   CANCoder encoder1{21};
   CANCoder encoder2{22};
   CANCoder encoder3{23};
   CANCoder encoder4{24};
-  // swerve module wheel pivoting motors:
+/* -------- swerve module wheel turning motors -------- */ 
   rev::CANSparkMax steeringMotor1{31, rev::CANSparkMax::MotorType::kBrushless};
   rev::CANSparkMax steeringMotor2{32, rev::CANSparkMax::MotorType::kBrushless};
   rev::CANSparkMax steeringMotor3{33, rev::CANSparkMax::MotorType::kBrushless};
   rev::CANSparkMax steeringMotor4{34, rev::CANSparkMax::MotorType::kBrushless};
-  // swerve module objects:
+  /* -------- swerve module objects -------- */ 
   SwerveModule *m1 = new SwerveModule{&driveMotor1, &steeringMotor1, &encoder1, -.7, 1};
   SwerveModule *m2 = new SwerveModule{&driveMotor2, &steeringMotor2, &encoder2, -.7, -1};
   SwerveModule *m3 = new SwerveModule{&driveMotor3, &steeringMotor3, &encoder3, .7, 1};
@@ -101,6 +110,24 @@ public:
   // arm extension motor
   rev::CANSparkMax armExtender{43, rev::CANSparkMax::MotorType::kBrushless};
   rev::SparkMaxPIDController armExtenderPID = armExtender.GetPIDController();
+  
+  // end-of-arm motors
+  rev::CANSparkMax twistMotor{44, rev::CANSparkMax::MotorType::kBrushless};
+  rev::SparkMaxPIDController twistPID = twistMotor.GetPIDController();
+  rev::CANSparkMax wristMotor{45, rev::CANSparkMax::MotorType::kBrushless};
+  rev::SparkMaxPIDController wristPID = wristMotor.GetPIDController();
+
+  // vacuum pumps
+  WPI_TalonSRX pump1{51};
+  WPI_TalonSRX pump2{52};
+  frc::DigitalInput pressure1{0};
+  frc::DigitalInput pressure2{1};
+  frc::Solenoid suctionCup1{frc::PneumaticsModuleType::REVPH, 0};
+  frc::Solenoid suctionCup2{frc::PneumaticsModuleType::REVPH, 15};
+  bool isHoldingCone = false;
+
+
+  ArmController arm{0.4, 7};
 
   void RobotInit() override;
   void RobotPeriodic() override;
@@ -114,7 +141,4 @@ public:
   void TestPeriodic() override;
   void SimulationInit() override;
   void SimulationPeriodic() override;
-
-private:
-  
 };
