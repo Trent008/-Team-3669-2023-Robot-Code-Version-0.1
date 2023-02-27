@@ -20,7 +20,7 @@ public:
         return nominalSpeed + joy->GetRawAxis(3) * (1 - nominalSpeed);
     }
 
-    double getX()
+    double getLX()
     {
         a = getSpeed() * joy->GetRawAxis(0);
         if (!std::signbit(a))
@@ -44,7 +44,7 @@ public:
         return a;
     }
 
-    double getY()
+    double getLY()
     {
         a = getSpeed() * -joy->GetRawAxis(1);
         if (!std::signbit(a))
@@ -68,9 +68,32 @@ public:
     }
 
     // get Z Rotate axis
-    double getZR()
+    double getRX()
     {
         a = getSpeed() * joy->GetRawAxis(4);
+        if (!std::signbit(a))
+        {
+            a -= deadband;
+            if (std::signbit(a))
+            {
+                a = 0;
+            }
+        }
+        else if (std::signbit(a))
+        {
+            a += deadband;
+            if (!std::signbit(a))
+            {
+                a = 0;
+            }
+        }
+        a *= 1 / (1 - deadband);
+        return a;
+    }
+
+    double getRY()
+    {
+        a = getSpeed() * -joy->GetRawAxis(5);
         if (!std::signbit(a))
         {
             a -= deadband;

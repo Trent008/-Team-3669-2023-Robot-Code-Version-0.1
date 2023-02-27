@@ -61,19 +61,27 @@ public:
     }
 
     double getXR() {
-        return getAxis(3);
+        return 8*getAxis(3);
     }
 
     double getYR() {
-        return getAxis(4);
+        return -8*getAxis(4);
     }
 
     double getZR() {
-        return getAxis(5);
+        return 8*getAxis(5);
+    }
+
+    bool getMenuPressed() {
+        return joy->GetRawButtonPressed(1);
     }
 
     bool getCTRLPressed() {
         return joy->GetRawButtonPressed(14);
+    }
+
+    bool getAltPressed() {
+        return joy->GetRawButtonPressed(12);
     }
 
     bool getESCPressed() {

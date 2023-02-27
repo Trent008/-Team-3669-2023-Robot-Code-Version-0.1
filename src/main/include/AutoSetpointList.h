@@ -1,13 +1,15 @@
 #pragma once
 #include "AngleChooser.h"
+#include "AutoPosition.h"
 #include "Vector.h"
 
 // converts an 4 x 10 array giving coordinates, angles, and times into an
 // autonomous setpoint array.
-class AutoSetpointList {
+class AutoSetpointList
+{
 private:
   double mP = 10;
-  double mA = 10;
+  double mA = 30;
 
 public:
   double p;
@@ -19,70 +21,77 @@ public:
   Vector nextPosition;
   Vector position;
   Vector positionDifference;
-  double angles[750];
-  Vector positions[750];
+  AutoPosition positions[750];
   AngleChooser angleChooser{};
   double changeTime;
   double positionRate;
   double angleRate;
-  AutoSetpointList(double setpoints[10][4]) {
+  AutoSetpointList(AutoPosition setpoints[10])
+  {
     int t = 0;
-    for (int i = 1; i < 10; i++) { // loops through the setpoint list
-      lastPosition = Vector{setpoints[i - 1][0], setpoints[i - 1][1]};
-      nextPosition = Vector{setpoints[i][0], setpoints[i][1]};
+    for (int i = 1; i < 10; i++)
+    { // loops through the setpoint list
+      lastPosition = setpoints[i - 1].getPosition();
+      nextPosition = setpoints[i].getPosition();
       positionDifference = nextPosition - lastPosition;
       difference = abs(positionDifference);
-      angleDifference = angleChooser.getShortestDirection(setpoints[i - 1][2],
-                                                          setpoints[i][2]);
+      angleDifference = angleChooser.getShortestDirection(setpoints[i - 1].getAngle(), setpoints[i].getAngle());
       // find the time it takes to reach the next setpoints
       positionChangeTime = difference / mP;
       angleChangeTime = std::abs(angleDifference) / mA;
       // find the slowest change time
-      if (positionChangeTime >= angleChangeTime) {
+      if (positionChangeTime >= angleChangeTime)
+      {
         angleRate = angleChangeTime / positionChangeTime;
         positionRate = 1.0;
         changeTime = positionChangeTime;
-      } else {
+      }
+      else
+      {
         positionRate = positionChangeTime / angleChangeTime;
         angleRate = 1.0;
         changeTime = angleChangeTime;
       }
 
       // break for the given time
-      for (double j = 0; j < setpoints[i - 1][3]; j += 0.02) {
-        if (t < 750) {
-          positions[t] = lastPosition;
-          angles[t] = setpoints[i - 1][2];
+      for (double j = 0; j < setpoints[i - 1].getWaitTime(); j += 0.02)
+      {
+        if (t < 750)
+        {
+          positions[t] = setpoints[i-1];
           t++;
         }
       }
 
       // set setpoints
-      for (double k = 0; k < changeTime; k += 0.02) { //
-        if (t < 750) {
+      for (double k = 0; k < changeTime; k += 0.02)
+      { //
+        if (t < 750)
+        {
           position = Polar(1, angle(positionDifference));
           position *= getPathValue(k * positionRate, difference, mP);
           position += lastPosition;
-          positions[t] = position;
-
-          angles[t] = setpoints[i - 1][2] +
-                      getPathValue(k * angleRate, angleDifference, mA);
+          positions[t] = AutoPosition{position, setpoints[i - 1].getAngle() + getPathValue(k * angleRate, angleDifference, mA), setpoints[i].getArmPosition(), setpoints[i].getSuctionCupState(), setpoints[i].getWristAngle()};
           t++;
         }
       }
     }
   }
 
-  double getPathValue(double t, double d, double m) {
-    if (d != 0) {
+  double getPathValue(double t, double d, double m)
+  {
+    if (d != 0)
+    {
       p = m * t * std::abs(d) / d;
-    } else {
+    }
+    else
+    {
       p = 0;
     }
     return p;
   }
 
-  Vector getPosition(int index) { return positions[index]; }
-
-  double getAngle(int index) { return angles[index]; }
+  AutoPosition getPose(int index) {
+    return positions[index];
+  }
 };

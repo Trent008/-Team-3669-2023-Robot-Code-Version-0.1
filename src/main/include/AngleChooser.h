@@ -15,9 +15,9 @@ class AngleChooser
     public:
         double getShortestAngle(double current, double setpoint) {
             option[0] = setpoint - current;
-            option[1] = option[0] - (!std::signbit(option[0]) ? 360 : -360);
-            option[2] = option[0] - (!std::signbit(option[0]) ? 180 : -180);
-            option[3] = option[2] - (!std::signbit(option[2]) ? 360 : -360);
+            option[1] = option[0] + (std::signbit(option[0]) ? 360 : -360);
+            option[2] = option[0] + (std::signbit(option[0]) ? 180 : -180);
+            option[3] = option[2] + (std::signbit(option[2]) ? 360 : -360);
           
             // choose the lowest angle option
             shortest = option[0];
@@ -30,7 +30,7 @@ class AngleChooser
 
         double getShortestDirection(double current, double setpoint) {
             option[0] = setpoint - current;
-            option[1] = option[0] - (!std::signbit(option[0]) ? 360 : -360);
+            option[1] = option[0] + (std::signbit(option[0]) ? 360 : -360);
             // choose the lowest angle option
             shortest = (std::abs(option[0]) < std::abs(option[1])) ? option[0] : option[1];
             return shortest;
