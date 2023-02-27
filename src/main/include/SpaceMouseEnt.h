@@ -30,11 +30,11 @@ class SpaceMouseEnt{
             return -joy->GetRawAxis(3);
         }
 
-        double GetYR() {
+        double getYR() {
             return -joy->GetRawAxis(4);
         }
 
-        double GetZR() {
+        double getZR() {
             a = 0.7 * joy->GetRawAxis(5);
             return std::signbit(a) ? -pow(a, 2): pow(a, 2);
         }

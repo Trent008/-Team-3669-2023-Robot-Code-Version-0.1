@@ -48,7 +48,7 @@ void Robot::AutonomousPeriodic() {
     suctionCup1.Set(isHoldingCone);
     suctionCup2.Set(isHoldingCone);
     // delay to grab cone
-    if (setpointIndex > 25) {
+    if (setpointIndex > 50) {
       // set arm PID references
       arm.setArmPosition(setpointList.getPose(setpointIndex).getArmPosition(), setpointList.getPose(setpointIndex).getWristAngle());
       arm.update();
@@ -74,14 +74,14 @@ void Robot::TeleopInit() {
 }
 
 void Robot::TeleopPeriodic() {
-  if (SMPro.getMenuPressed()) {motionController.zeroYaw();}
+  if (xboxC.getAPressed()) {motionController.zeroYaw();}
 
   SMPro.update();
-  motionController.update(Vector{SMEnt.getX(), SMEnt.getY()}, SMEnt.GetZR());
+  motionController.update(Vector{xboxC.getLX(), xboxC.getLY()}, xboxC.getRX());
   swerve.run();
 
-  //pump1.Set(arm.pumpPercent(pressure1.Get()));
-  //pump2.Set(arm.pumpPercent(pressure2.Get()));
+  pump1.Set(arm.pumpPercent(pressure1.Get()));
+  pump2.Set(arm.pumpPercent(pressure2.Get()));
   isHoldingCone = (SMPro.getCTRLPressed()) ? !isHoldingCone : isHoldingCone;
   suctionCup1.Set(isHoldingCone);
   suctionCup2.Set(isHoldingCone);
