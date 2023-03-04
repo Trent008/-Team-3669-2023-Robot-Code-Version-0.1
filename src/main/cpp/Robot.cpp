@@ -3,6 +3,8 @@
 #include <fmt/core.h>
 #include <frc/smartdashboard/SmartDashboard.h>
 
+
+
 void Robot::RobotInit() {
   frc::CameraServer::StartAutomaticCapture();
 
@@ -31,42 +33,24 @@ void Robot::AutonomousInit() {
 }
 
 void Robot::AutonomousPeriodic() {
-  if (setpointIndex < 750) {
-    currentPosition = swerve.getPosition();
-    positionSetpoint = setpointList.getPose(setpointIndex).getPosition();
-    fieldVelocitySetpoint = autonomousTargeting.targetPosition(currentPosition, positionSetpoint);
-    
-    angleSetpoint = setpointList.getPose(setpointIndex).getAngle();
-    currentAngle = motionController.getRobotAngle();
-    rotationRateSetpoint = autonomousTargeting.targetAngle(currentAngle, angleSetpoint);
-    
-    motionController.update(fieldVelocitySetpoint, rotationRateSetpoint);
-    swerve.run();
-    pump1.Set(arm.pumpPercent(pressure1.Get()));
-    pump2.Set(arm.pumpPercent(pressure2.Get()));
-    isHoldingCone = setpointList.getPose(setpointIndex).getSuctionCupState();
-    suctionCup1.Set(isHoldingCone);
-    suctionCup2.Set(isHoldingCone);
-    // delay to grab cone
-    if (setpointIndex > 50) {
-      // set arm PID references
-      arm.setArmPosition(setpointList.getPose(setpointIndex).getArmPosition(), setpointList.getPose(setpointIndex).getWristAngle());
-      arm.update();
-    }
-  }
-  else {  // go to default position at the end of autonomous
-    motionController.update(Vector{}, 0);
-    swerve.run();
+  swerveTargeting.targetPose(setpoints[i].pose, setpoints[i].driveRate, setpoints[i].rotationRate);
 
-    left_J1_PID.SetReference(arm.getJ1PIDReference(), rev::CANSparkMax::ControlType::kPosition);
-    right_J1_PID.SetReference(arm.getJ1PIDReference(), rev::CANSparkMax::ControlType::kPosition);
-    j2_PID.SetReference(arm.getJ2PIDReference(), rev::CANSparkMax::ControlType::kPosition);
-    j3_PID.SetReference(arm.getj3PIDReference(), rev::CANSparkMax::ControlType::kPosition);
-    j4_PID.SetReference(arm.getJ4PIDReference(), rev::CANSparkMax::ControlType::kPosition);
-    arm.setArmPosition(Vector{-9, 10}, 0);
-    arm.update();
+  pump1.Set(arm.pumpPercent(pressure1.Get()));
+  pump2.Set(arm.pumpPercent(pressure2.Get()));
+  isHoldingCone = setpoints[i].suctionCupState;
+  suctionCup1.Set(isHoldingCone);
+  suctionCup2.Set(isHoldingCone);
+  arm.setArmPosition(setpoints[i].armPosition, setpoints[i].wristAngle);
+  arm.update();
+  left_J1_PID.SetReference(arm.getJ1PIDReference(), rev::CANSparkMax::ControlType::kPosition);
+  right_J1_PID.SetReference(arm.getJ1PIDReference(), rev::CANSparkMax::ControlType::kPosition);
+  j2_PID.SetReference(arm.getJ2PIDReference(), rev::CANSparkMax::ControlType::kPosition);
+  j3_PID.SetReference(arm.getj3PIDReference(), rev::CANSparkMax::ControlType::kPosition);
+  j4_PID.SetReference(arm.getJ4PIDReference(), rev::CANSparkMax::ControlType::kPosition);
+  if (arm.poseReached(1) && swerveTargeting.poseReached(3, 5) && (i < 14)) {
+    i++;
   }
-  setpointIndex++;
+  t++;
 }
 
 void Robot::TeleopInit() {
@@ -77,8 +61,7 @@ void Robot::TeleopPeriodic() {
   if (xboxC.getAPressed()) {motionController.zeroYaw();}
 
   SMPro.update();
-  motionController.update(Vector{xboxC.getLX(), xboxC.getLY()}, xboxC.getRX());
-  swerve.run();
+  swerve.Set(xboxC.getFieldPoseVelocity());
 
   pump1.Set(arm.pumpPercent(pressure1.Get()));
   pump2.Set(arm.pumpPercent(pressure2.Get()));
@@ -94,18 +77,19 @@ void Robot::TeleopPeriodic() {
   j4_PID.SetReference(arm.getJ4PIDReference(), rev::CANSparkMax::ControlType::kPosition);
 
   // arm position buttons
-  if (SMPro.getAltPressed()) {  arm.setArmPosition(Vector{10, 7}, -7, 0);  }
-  if (SMPro.get1Pressed()) {arm.setArmPosition(Vector{20, 39}, 0, 0);}
-  if (SMPro.get2Pressed()) {arm.setArmPosition(Vector{21, 43}, 0, 0);}
-  if (SMPro.get3Pressed()) {arm.setArmPosition(Vector{37, 55}, 0, 0);}
+  if (SMPro.getAltPressed()) {  arm.setArmPosition({10, 7}, -7, 0);  }
+  if (SMPro.get1Pressed()) {arm.setArmPosition(cone1 + Vector{0, 3}, 0, 0);}
+  if (SMPro.get2Pressed()) {arm.setArmPosition(cone2 + Vector{0, 3}, 0, 0);}
+  if (SMPro.get3Pressed()) {arm.setArmPosition(cube1, 0, 0);}
+  if (SMPro.get4Pressed()) {arm.setArmPosition(cube2, 0, 0);}
   if (SMPro.getESCPressed()) {  
     isHoming = true;
     arm.setArmPosition(Vector{8, 14}, 10, 0);  
   }
   arm.update(Vector{SMPro.getY(), SMPro.getZ()}, SMPro.getYR(), SMPro.getXR());
-  if (isHoming && arm.getArmError() < 1) {
+  if (isHoming && arm.poseReached(1)) {
     isHoming = false;
-    arm.setArmPosition(Vector{-9, 9.75}, 10, 0);
+    arm.setArmPosition({-9, 9.75}, 10, 0);
   }
 }
 

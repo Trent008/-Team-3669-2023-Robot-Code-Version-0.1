@@ -9,53 +9,47 @@
 #include "SpaceMousePro.h"
 #include "SpaceMouseEnt.h"
 #include "XBOXController.h"
-#include "FOC.h"
-#include "SwerveModule.h"
-#include "SwerveDrive.h"
 #include "ArmController.h"
-#include <frc/Joystick.h>
-#include "ctre/phoenix.h"
-#include <rev/CANSparkMax.h>
-#include <math.h>
-#include <cmath>
-#include "PositionAndAngleTargeting.h"
-#include "AutoSetpointList.h"
-#include "AutoPosition.h"
+#include "RobotPoseTargeting.h"
+#include "AutoSetpoint.h"
 
 class Robot : public frc::TimedRobot
 {
 
 public:
-  double deadband = 0.08;
   double robotAccel = 0.03;     // acceleration rate of the robot speed on the field
   double robotTurnAccel = 0.03; // acceleration rate of robot steering rate
-
+  Vector loadingStation = {20, 39};
+  Vector cone1 = {21, 40};
+  Vector cone2 = {37, 51};
+  Vector cube1 = {13, 30};
+  Vector cube2 = {30, 45};
+  Vector pole1 = {74, 18.5};
   /*
    * the coordinates, angles, wait times, arm coordinates, suction
    * for the autonomous routine
    */
-  AutoPosition autoSetpoints[10] =
+  AutoSetpoint setpoints[15] =
       {
-          AutoPosition{Vector{0, 0}, 0, Vector{-9, 9.75}, true, 1},
-          AutoPosition{Vector{0, 24}, 90, Vector{-9, 9.75}, true, 1},
-          AutoPosition{Vector{0, 0}, 0, Vector{-9, 9.75}, false, 0},
-          AutoPosition{Vector{0, 0}, 0, Vector{-9, 9.75}, false, 0},
-          AutoPosition{Vector{0, 0}, 0, Vector{-9, 9.75}, false, 0},
-          AutoPosition{Vector{0, 0}, 0, Vector{-9, 9.75}, false, 0},
-          AutoPosition{Vector{0, 0}, 0, Vector{-9, 9.75}, false, 0},
-          AutoPosition{Vector{0, 0}, 0, Vector{-9, 9.75}, false, 0},
-          AutoPosition{Vector{0, 0}, 0, Vector{-9, 9.75}, false, 0},
-          AutoPosition{Vector{0, 0}, 0, Vector{-9, 9.75}, false, 0},
+          {Pose{}, {-9, 9.75}, true, 0},
+          {Pose{{0, 5}, 0}, cone2, true, 0},
+          {Pose{{0, 21.7}, 0}, cone2, true, 0},
+          {Pose{{0, 21.7}, 0}, cone2 - Vector{0,4}, true, 0},
+          {Pose{{0, 5}, 0}, pole1, false, 0},
+          {Pose{}, {-9, 9.75}, false, 0},
+          {Pose{}, {-9, 9.75}, false, 0},
+          {Pose{}, {-9, 9.75}, false, 0},
+          {Pose{}, {-9, 9.75}, false, 0},
+          {Pose{}, {-9, 9.75}, false, 0},
+          {Pose{}, {-9, 9.75}, false, 0},
+          {Pose{}, {-9, 9.75}, false, 0},
+          {Pose{}, {-9, 9.75}, false, 0},
+          {Pose{}, {-9, 9.75}, false, 0},
+          {Pose{}, {-9, 9.75}, false, 0},
       };
-  AutoSetpointList setpointList{autoSetpoints};
 
-  int setpointIndex = 0; // keeps track of the autonomous point index
-  Vector positionSetpoint;
-  Vector currentPosition;
-  Vector fieldVelocitySetpoint;
-  double angleSetpoint;
-  double currentAngle;
-  double rotationRateSetpoint;
+  int i = 0; // keeps track of the autonomous point index
+  int t = 0; // keeps track of the number of processer
 
   frc::Joystick driveController{0};
   frc::Joystick armController{1};
@@ -83,10 +77,10 @@ public:
   rev::CANSparkMax steeringMotor3{33, rev::CANSparkMax::MotorType::kBrushless};
   rev::CANSparkMax steeringMotor4{34, rev::CANSparkMax::MotorType::kBrushless};
   /* -------- swerve module objects -------- */
-  SwerveModule *m1 = new SwerveModule{&driveMotor1, &steeringMotor1, &encoder1, -.7, 1};
-  SwerveModule *m2 = new SwerveModule{&driveMotor2, &steeringMotor2, &encoder2, -.7, -1};
-  SwerveModule *m3 = new SwerveModule{&driveMotor3, &steeringMotor3, &encoder3, .7, 1};
-  SwerveModule *m4 = new SwerveModule{&driveMotor4, &steeringMotor4, &encoder4, .7, -1};
+  SwerveModule *m1 = new SwerveModule{&driveMotor1, &steeringMotor1, &encoder1, {-.7, 1}};
+  SwerveModule *m2 = new SwerveModule{&driveMotor2, &steeringMotor2, &encoder2, {-.7, -1}};
+  SwerveModule *m3 = new SwerveModule{&driveMotor3, &steeringMotor3, &encoder3, {.7, 1}};
+  SwerveModule *m4 = new SwerveModule{&driveMotor4, &steeringMotor4, &encoder4, {.7, -1}};
   // swerve module array:
   SwerveModule *modules[4] = {m1, m2, m3, m4};
 
@@ -94,7 +88,7 @@ public:
   FOC motionController{robotAccel, robotTurnAccel};
   // swerve drive object to control the 4-SwerveModule array using the motion controller object
   SwerveDrive swerve{&motionController, modules};
-  PositionAndAngleTargeting autonomousTargeting{0.04, 0.007, 0.3, 0.3};
+  RobotPoseTargeting swerveTargeting{&swerve, 0.04, 0.007};
 
   // leadscrew motors and PID controllers
   rev::CANSparkMax left_J1_NEO{41, rev::CANSparkMax::MotorType::kBrushless};
@@ -122,7 +116,7 @@ public:
   bool isHoldingCone = false;
   bool isHoming = false;
 
-  ArmController arm{0.4, 4, 4};
+  ArmController arm{0.8, 4, 4};
 
   void RobotInit() override;
   void RobotPeriodic() override;

@@ -1,7 +1,5 @@
 #pragma once
 #include "Vector.h"
-#include "cmath"
-#include "math.h"
 
 class ArmController
 {
@@ -17,8 +15,8 @@ private:
     const double deck = -38.75;
     const double frame = 26;
     const double floor = -45.5;
-    Vector origin = Vector{19.75, -49.5};
-    Vector startPosition = Vector{10.75, -39.75};
+    Vector origin = {19.75, -49.5};
+    Vector startPosition = {10.75, -39.75};
     Vector currentPosition;
     Vector targetPosition;
     Vector error;
@@ -49,7 +47,7 @@ public:
         j4_Min = j4_Max - 180;
     }
 
-    void update(Vector velocityTarget = Vector{}, double j3Velocity = 0, double j4Velocity = 0)
+    void update(Vector velocityTarget = {}, double j3Velocity = 0, double j4Velocity = 0)
     {
 
     /* ------------- limits the target position ------------- */
@@ -76,7 +74,7 @@ public:
 
     /* -- moves the currentPosition toward the target currentPosition -- */
         error = targetPosition - currentPosition;
-        if (abs(error) > 2 * positionRate)
+        if (error > 2 * positionRate)
         {
             currentPosition += error * positionRate / abs(error);
         }
@@ -177,9 +175,8 @@ public:
         this->j3Setpoint = j3Setpoint;
     }
 
-    // gets the current error from the target position
-    double getArmError() {
-        return abs(error);
+    bool poseReached(double tolerance) {
+        return error < tolerance;
     }
 
     double pumpPercent(bool pressure)

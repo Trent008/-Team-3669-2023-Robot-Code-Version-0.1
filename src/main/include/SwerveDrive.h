@@ -1,6 +1,7 @@
 #pragma once
 #include "FOC.h"
 #include "SwerveModule.h"
+#include "Pose.h"
 #include "frc/smartdashboard/SmartDashboard.h"
 
 
@@ -14,17 +15,18 @@
 class SwerveDrive
 {
 private:
-  FOC* motionController;    // updates the robot velocity and rotation rate
   SwerveModule *module[4];  // array of 4 swerve modules
+  Pose robotPoseVelocity;
   Vector moduleVelocity[4];  // stores the velocity of all 4 modules
   Vector moduleTurnVector; // stores the turn-vector value for each module in turn
   Vector fieldwheelPositionChange; // stores the velocity of each wheel in encoders/100ms in turn
   Vector largestVector;    // fastest module velocity to be scaled to <= 1
   Vector averagePositionChange;  // average module velocity
-  Vector fieldLocationEncoders;  // field location in encoders from the starting point
   Vector fieldLocation;    // field location in inches from the starting point 
 
 public:
+  FOC* motionController;    // updates the robot velocity and rotation rate
+
   SwerveDrive(FOC *motionController, SwerveModule *module[4])
   {
     this->motionController = motionController;
@@ -36,12 +38,13 @@ public:
   /**
    * runs the swerve modules using the values from the motion controller
    **/
-  void run() {
+  void Set(Pose fieldPoseVelocity = {}) {
+    robotPoseVelocity = motionController->getRobotPoseVelocity(fieldPoseVelocity);
     for (int i = 0; i < 4; i++)     // compare all of the module velocities to find the largest
     {
-      moduleTurnVector = module[i]->getTurnVector() * motionController->getRotationRate();
-      moduleVelocity[i] = motionController->getRobotVelocity() + moduleTurnVector;
-      if (abs(moduleVelocity[i]) > abs(largestVector))
+      moduleTurnVector = module[i]->getTurnVector() * robotPoseVelocity.getAngle();
+      moduleVelocity[i] = robotPoseVelocity.getPosition() + moduleTurnVector;
+      if (moduleVelocity[i] > largestVector)
       {
         largestVector = moduleVelocity[i]; 
       }
@@ -51,7 +54,7 @@ public:
 
     for (int i = 0; i < 4; i++)  // loop through the module indexes again
     {
-      if (abs(largestVector) > 1.0) {
+      if (largestVector > 1.0) {
         moduleVelocity[i] /= abs(largestVector);    // scale the vector sizes down to 1
       }
       
@@ -62,13 +65,16 @@ public:
       averagePositionChange += fieldwheelPositionChange;   // add the wheel velocity to the total sum
     }
     averagePositionChange /= 4; // find the average position change
+    averagePositionChange *= (1 / 8.41 / 2048 * M_PI * 3.9);
 
-    fieldLocationEncoders += averagePositionChange;  // adds the distance travelled this cycle to the total distance to find the position
+    fieldLocation += averagePositionChange;  // adds the distance travelled this cycle to the total distance to find the position
   }
 
-  Vector getPosition() {
-    fieldLocation = fieldLocationEncoders;
-    fieldLocation *= 1 / 8.41 / 2048 * M_PI * 3.9;  // converts the field location to inches
-    return fieldLocation;
+  void setPosition(Vector position) {
+    fieldLocation = position;
+  }
+
+  Pose getPose() {
+    return Pose{fieldLocation, motionController->getRobotAngle()};
   }
 };

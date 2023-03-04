@@ -28,14 +28,14 @@ public:
      * parameters posX and posY set the position of
      * the module relative to the center of the robot
      */
-    SwerveModule(WPI_TalonFX* driveMotor, rev::CANSparkMax* steeringMotor, CANCoder* wheelEncoder, double posX, double posY)
+    SwerveModule(WPI_TalonFX* driveMotor, rev::CANSparkMax* steeringMotor, CANCoder* wheelEncoder, Vector position)
     {
         steeringMotorP = 1;
         this->driveMotor = driveMotor;
         this->steeringMotor = steeringMotor;
         this->wheelEncoder = wheelEncoder;
         this->steeringMotorP = steeringMotorP;
-        turnVector = Vector{posX, posY};
+        turnVector = position;
         turnVector.rotate(90);
     }
 

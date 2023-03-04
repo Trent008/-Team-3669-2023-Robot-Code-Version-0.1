@@ -99,21 +99,42 @@ public:
         y -= obj.y;
     }
 
+    bool operator>(Vector const &obj)
+    {
+        return hypot(x, y) > hypot(obj.x, obj.y);
+    }
+
+    bool operator>(double const &val)
+    {
+        return hypot(x, y) > val;
+    }
+
+    bool operator<(Vector const &obj)
+    {
+        return hypot(x, y) < hypot(obj.x, obj.y);
+    }
+
+    bool operator<(double const &val)
+    {
+        return hypot(x, y) < val;
+    }
+
     double getX() { return x; }
 
     double getY() { return y; }
-    
-    void setX(double x) {
+
+    void setX(double x)
+    {
         this->x = x;
     }
 
-    void setY(double y) {
+    void setY(double y)
+    {
         this->y = y;
     }
-
 };
 
-double abs(Vector &obj)
+double abs(Vector obj)
 {
     return hypot(obj.getX(), obj.getY());
 }

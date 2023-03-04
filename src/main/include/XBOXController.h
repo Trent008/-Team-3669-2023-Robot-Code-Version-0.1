@@ -1,5 +1,6 @@
 #pragma once
 #include "frc/Joystick.h"
+#include "Pose.h"
 
 class XBOXController
 {
@@ -112,6 +113,10 @@ public:
         }
         a *= 1 / (1 - deadband);
         return a;
+    }
+
+    Pose getFieldPoseVelocity() {
+        return Pose{Vector{getLX(), getLY()}, getRX()};
     }
 
     bool getAPressed() 
